@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-import { registerUser } from "../api/auth";
-import logo from "../../public/assets/media/HolidazeLogo.png";
+import Header from "../components/Header.jsx";
+import { createApiKey, registerUser } from "../api/auth";
+import { save } from "../utils/storage";
+
 import registerImage from "../../public/assets/media/register.png";
 
 export default function Register() {
@@ -64,7 +66,15 @@ export default function Register() {
 
     try {
       setLoading(true);
+
       const newUser = await registerUser(userData);
+
+      save("user", newUser);
+
+      const apiKey = await createApiKey(newUser.accessToken);
+
+      save("apiKey", apiKey);
+
       navigate(`/profile/${newUser.name}`);
     } catch (error) {
       setMessage(error.message);
@@ -76,41 +86,7 @@ export default function Register() {
   return (
     <div className="min-h-screen bg-[#E7DED7] text-[#2A211D]">
       <div className="mx-auto max-w-[1600px] bg-[#F5EFEB]">
-        <header className="flex items-center justify-between bg-[#F8F2EE] px-10 py-5 shadow-sm">
-          <Link to="/" className="flex items-center gap-5">
-            <img
-              src={logo}
-              alt="Holidaze logo"
-              className="h-20 w-auto object-contain"
-            />
-            <span className="font-serif text-4xl font-semibold tracking-wide text-[#B55332]">
-              Holidaze
-            </span>
-          </Link>
-
-          <nav className="hidden items-center gap-4 md:flex">
-            <Link
-              to="/"
-              className="rounded-full px-5 py-3 text-sm font-medium tracking-wide text-[#7C7069] transition hover:bg-[#F3E7DF] hover:text-[#B55332]"
-            >
-              Explore
-            </Link>
-
-            <Link
-              to="/login"
-              className="rounded-full px-5 py-3 text-sm font-medium tracking-wide text-[#7C7069] transition hover:bg-[#F3E7DF] hover:text-[#B55332]"
-            >
-              Log in
-            </Link>
-
-            <Link
-              to="/register"
-              className="rounded-full bg-[#B55332] px-7 py-3 text-sm font-semibold tracking-wide text-white shadow-[0_10px_30px_rgba(181,83,50,0.25)] transition hover:scale-[1.02] hover:bg-[#944224]"
-            >
-              Register
-            </Link>
-          </nav>
-        </header>
+        <Header />
 
         <main className="grid min-h-[780px] lg:grid-cols-[0.9fr_1.1fr]">
           <section className="relative hidden overflow-hidden lg:block">
@@ -119,15 +95,18 @@ export default function Register() {
               alt="Luxury resort terrace at sunset"
               className="h-full w-full object-cover"
             />
+
             <div className="absolute inset-0 bg-[#2A211D]/35" />
 
             <div className="absolute bottom-20 left-16 max-w-md text-white">
               <p className="text-sm uppercase tracking-[0.35em] text-white/80">
                 Join Holidaze
               </p>
+
               <h1 className="mt-5 font-serif text-6xl font-semibold leading-tight">
                 Your next adventure starts here.
               </h1>
+
               <p className="mt-5 text-lg text-white/85">
                 Create your account and start discovering places worth
                 remembering.
@@ -155,6 +134,7 @@ export default function Register() {
                   <span className="text-sm font-medium text-[#6B5F58]">
                     Username
                   </span>
+
                   <input
                     name="name"
                     value={formData.name}
@@ -169,6 +149,7 @@ export default function Register() {
                   <span className="text-sm font-medium text-[#6B5F58]">
                     Email address
                   </span>
+
                   <input
                     name="email"
                     type="email"
@@ -185,6 +166,7 @@ export default function Register() {
                     <span className="text-sm font-medium text-[#6B5F58]">
                       Password
                     </span>
+
                     <input
                       name="password"
                       type="password"
@@ -200,6 +182,7 @@ export default function Register() {
                     <span className="text-sm font-medium text-[#6B5F58]">
                       Confirm password
                     </span>
+
                     <input
                       name="confirmPassword"
                       type="password"
@@ -216,6 +199,7 @@ export default function Register() {
                   <span className="text-sm font-medium text-[#6B5F58]">
                     Profile picture URL optional
                   </span>
+
                   <input
                     name="avatarUrl"
                     type="url"
@@ -231,6 +215,7 @@ export default function Register() {
                     <span className="block font-serif text-xl font-semibold text-[#B55332]">
                       Register as a Venue Manager
                     </span>
+
                     <span className="mt-1 block text-sm text-[#7C7069]">
                       Create venues and manage bookings.
                     </span>
@@ -264,6 +249,7 @@ export default function Register() {
 
                 <div className="flex items-center justify-center gap-3 border-t border-[#E4D8D0] pt-6 text-sm text-[#7C7069]">
                   <span>Already have an account?</span>
+
                   <Link
                     to="/login"
                     className="font-semibold text-[#B55332] hover:underline"

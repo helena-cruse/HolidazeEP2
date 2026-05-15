@@ -14,6 +14,7 @@ import {
   subMonths,
 } from "date-fns";
 
+import Header from "../components/Header.jsx";
 import { getVenueById } from "../api/venues";
 import { createBooking } from "../api/bookings";
 import { load } from "../utils/storage";
@@ -88,6 +89,7 @@ export default function VenueDetails() {
       new Date(checkOut),
       new Date(checkIn)
     );
+
     return amount > 0 ? amount : 0;
   }, [checkIn, checkOut]);
 
@@ -177,41 +179,7 @@ export default function VenueDetails() {
   return (
     <div className="min-h-screen bg-[#E7DED7] text-[#2A211D]">
       <div className="mx-auto max-w-[1600px] bg-[#F5EFEB]">
-        <header className="flex items-center justify-between bg-[#F8F2EE] px-10 py-5 shadow-sm">
-          <Link to="/" className="flex items-center gap-5">
-            <img
-              src={logo}
-              alt="Holidaze logo"
-              className="h-20 w-auto object-contain"
-            />
-            <span className="font-serif text-4xl font-semibold tracking-wide text-[#B55332]">
-              Holidaze
-            </span>
-          </Link>
-
-          <nav className="hidden items-center gap-4 md:flex">
-            <Link
-              to="/"
-              className="rounded-full px-5 py-3 text-sm font-medium tracking-wide text-[#7C7069] transition hover:bg-[#F3E7DF] hover:text-[#B55332]"
-            >
-              Explore
-            </Link>
-
-            <Link
-              to="/login"
-              className="rounded-full px-5 py-3 text-sm font-medium tracking-wide text-[#7C7069] transition hover:bg-[#F3E7DF] hover:text-[#B55332]"
-            >
-              Log in
-            </Link>
-
-            <Link
-              to="/register"
-              className="rounded-full bg-[#B55332] px-7 py-3 text-sm font-semibold tracking-wide text-white shadow-[0_10px_30px_rgba(181,83,50,0.25)] transition hover:scale-[1.02] hover:bg-[#944224]"
-            >
-              Register
-            </Link>
-          </nav>
-        </header>
+        <Header />
 
         <main className="px-8 py-10 md:px-20">
           <div className="mb-8 text-sm text-[#7C7069]">
@@ -294,6 +262,7 @@ export default function VenueDetails() {
                 <h2 className="font-serif text-3xl font-semibold">
                   Availability
                 </h2>
+
                 <Calendar
                   currentMonth={currentMonth}
                   setCurrentMonth={setCurrentMonth}
@@ -302,6 +271,28 @@ export default function VenueDetails() {
                   checkOut={checkOut}
                   onDateClick={handleCalendarDateClick}
                 />
+              </div>
+
+              <div className="py-8">
+                <h2 className="font-serif text-3xl font-semibold">Host</h2>
+
+                <div className="mt-5 flex items-center justify-between rounded-[24px] bg-white p-6 shadow-[0_10px_30px_rgba(0,0,0,0.04)]">
+                  <div>
+                    <p className="font-serif text-2xl font-semibold">
+                      {venue.owner?.name || "Holidaze host"}
+                    </p>
+                    <p className="mt-1 text-sm text-[#7C7069]">Venue manager</p>
+                  </div>
+
+                  {venue.owner?.name && (
+                    <Link
+                      to={`/profile/${venue.owner.name}`}
+                      className="rounded-full border border-[#B55332] px-6 py-3 text-sm text-[#B55332] transition hover:bg-[#B55332] hover:text-white"
+                    >
+                      View profile
+                    </Link>
+                  )}
+                </div>
               </div>
             </div>
 

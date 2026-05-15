@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
+import Header from "../components/Header.jsx";
 import { createApiKey, loginUser } from "../api/auth";
 import { save } from "../utils/storage";
 
-import logo from "../../public/assets/media/HolidazeLogo.png";
 import loginImage from "../../public/assets/media/login.png";
 
 export default function Login() {
@@ -55,42 +55,7 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-[#E7DED7] text-[#2A211D]">
       <div className="mx-auto max-w-[1600px] bg-[#F5EFEB]">
-        <header className="flex items-center justify-between bg-[#F8F2EE] px-10 py-5 shadow-sm">
-          <Link to="/" className="flex items-center gap-5">
-            <img
-              src={logo}
-              alt="Holidaze logo"
-              className="h-20 w-auto object-contain"
-            />
-
-            <span className="font-serif text-4xl font-semibold tracking-wide text-[#B55332]">
-              Holidaze
-            </span>
-          </Link>
-
-          <nav className="hidden items-center gap-4 md:flex">
-            <Link
-              to="/"
-              className="rounded-full px-5 py-3 text-sm font-medium tracking-wide text-[#7C7069] transition hover:bg-[#F3E7DF] hover:text-[#B55332]"
-            >
-              Explore
-            </Link>
-
-            <Link
-              to="/login"
-              className="rounded-full px-5 py-3 text-sm font-medium tracking-wide text-[#B55332] transition hover:bg-[#F3E7DF]"
-            >
-              Log in
-            </Link>
-
-            <Link
-              to="/register"
-              className="rounded-full bg-[#B55332] px-7 py-3 text-sm font-semibold tracking-wide text-white shadow-[0_10px_30px_rgba(181,83,50,0.25)] transition hover:scale-[1.02] hover:bg-[#944224]"
-            >
-              Register
-            </Link>
-          </nav>
-        </header>
+        <Header />
 
         <main className="grid min-h-[780px] lg:grid-cols-[0.95fr_1.05fr]">
           <section className="relative hidden overflow-hidden lg:block">

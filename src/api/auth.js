@@ -39,11 +39,11 @@ export async function loginUser(userData) {
   return json.data;
 }
 
-export async function createApiKey(token) {
+export async function createApiKey(accessToken) {
   const response = await fetch(`${AUTH_API}/create-api-key`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${accessToken}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
@@ -54,7 +54,7 @@ export async function createApiKey(token) {
   const json = await response.json();
 
   if (!response.ok) {
-    throw new Error("Could not create API key");
+    throw new Error(json.errors?.[0]?.message || "Failed to create API key");
   }
 
   return json.data.key;

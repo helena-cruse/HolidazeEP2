@@ -5,6 +5,7 @@ import VenueDetails from "../pages/VenueDetails.jsx";
 import Register from "../pages/Register.jsx";
 import Login from "../pages/Login.jsx";
 import Profile from "../pages/Profile.jsx";
+import CreateVenue from "../pages/CreateVenue.jsx";
 
 export default function AppRouter() {
   return (
@@ -14,6 +15,7 @@ export default function AppRouter() {
       <Route path="/register" element={<Register />} />
       <Route path="/login" element={<Login />} />
       <Route path="/profile/:name" element={<Profile />} />
+      <Route path="/create-venue" element={<CreateVenue />} />
     </Routes>
   );
 }

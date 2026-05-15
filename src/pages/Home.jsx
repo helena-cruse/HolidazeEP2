@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "@iconify/react";
 
+import Header from "../components/Header.jsx";
 import { getVenues } from "../api/venues";
-import logo from "../../public/assets/media/HolidazeLogo.png";
+
 import heroImage from "../../public/assets/media/hero.png";
 
 const filters = [
@@ -143,42 +144,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-[#E7DED7] text-[#2A211D]">
       <div className="mx-auto max-w-[1600px] bg-[#F5EFEB]">
-        <header className="flex items-center justify-between bg-[#F8F2EE] px-10 py-5">
-          <Link to="/" className="flex items-center gap-5">
-            <img
-              src={logo}
-              alt="Holidaze logo"
-              className="h-20 w-auto object-contain"
-            />
-
-            <span className="font-serif text-4xl font-semibold tracking-wide text-[#B55332]">
-              Holidaze
-            </span>
-          </Link>
-
-          <nav className="hidden items-center gap-4 md:flex">
-            <Link
-              to="/"
-              className="rounded-full px-5 py-3 text-sm font-medium tracking-wide text-[#7C7069] transition hover:bg-[#F3E7DF] hover:text-[#B55332]"
-            >
-              Explore
-            </Link>
-
-            <Link
-              to="/login"
-              className="rounded-full px-5 py-3 text-sm font-medium tracking-wide text-[#7C7069] transition hover:bg-[#F3E7DF] hover:text-[#B55332]"
-            >
-              Log in
-            </Link>
-
-            <Link
-              to="/register"
-              className="rounded-full bg-[#B55332] px-7 py-3 text-sm font-semibold tracking-wide text-white shadow-[0_10px_30px_rgba(181,83,50,0.25)] transition hover:scale-[1.02] hover:bg-[#944224]"
-            >
-              Register
-            </Link>
-          </nav>
-        </header>
+        <Header />
 
         <section
           className="relative flex h-[720px] items-center justify-center bg-cover bg-center px-6 text-center"
@@ -422,14 +388,6 @@ export default function Home() {
 
         <footer className="border-t border-[#E4D8D0] bg-[#F8F2EE] px-10 py-10">
           <div className="flex flex-col items-center justify-between gap-10 md:flex-row">
-            <div className="flex items-center gap-4">
-              <img src={logo} alt="Holidaze logo" className="h-10 w-auto" />
-
-              <span className="font-serif text-3xl font-semibold text-[#B55332]">
-                Holidaze
-              </span>
-            </div>
-
             <p className="text-sm text-[#7C7069]">
               Crafted for modern travelers seeking calm, comfort and
               unforgettable places.
@@ -437,7 +395,6 @@ export default function Home() {
 
             <div className="flex gap-8 text-sm font-medium text-[#A0482A]">
               <a href="#venues">Explore</a>
-              <a href="#">Become a Host</a>
               <Link to="/register">Register</Link>
             </div>
           </div>
