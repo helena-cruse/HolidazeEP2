@@ -6,7 +6,7 @@ export async function getProfileByName(name) {
   const apiKey = load("apiKey");
 
   const response = await fetch(
-    `${HOLIDAZE_API}/profiles/${name}?_venues=true&_bookings=true&_venueBookings=true`,
+    `${HOLIDAZE_API}/profiles/${name}?_bookings=true&_venues=true`,
     {
       headers: {
         Authorization: `Bearer ${user?.accessToken}`,
@@ -19,6 +19,29 @@ export async function getProfileByName(name) {
 
   if (!response.ok) {
     throw new Error(json.errors?.[0]?.message || "Failed to fetch profile");
+  }
+
+  return json.data;
+}
+
+export async function getProfileVenuesWithBookings(name) {
+  const user = load("user");
+  const apiKey = load("apiKey");
+
+  const response = await fetch(
+    `${HOLIDAZE_API}/profiles/${name}/venues?_bookings=true`,
+    {
+      headers: {
+        Authorization: `Bearer ${user?.accessToken}`,
+        "X-Noroff-API-Key": apiKey,
+      },
+    }
+  );
+
+  const json = await response.json();
+
+  if (!response.ok) {
+    throw new Error(json.errors?.[0]?.message || "Failed to fetch host venues");
   }
 
   return json.data;

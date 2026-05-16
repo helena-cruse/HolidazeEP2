@@ -1,9 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Icon } from "@iconify/react";
 
 import Header from "../components/Header.jsx";
-import { getProfileByName, updateProfile } from "../api/profiles";
+import {
+  getProfileByName,
+  getProfileVenuesWithBookings,
+  updateProfile,
+} from "../api/profiles";
 import { load } from "../utils/storage";
 
 export default function Profile() {
@@ -27,11 +31,32 @@ export default function Profile() {
 
   const isOwnProfile = loggedInUser?.name === name;
 
+  const hostBookings = useMemo(() => {
+    if (!profile?.venues?.length) return [];
+
+    return profile.venues.flatMap((venue) =>
+      (venue.bookings || []).map((booking) => ({
+        ...booking,
+        venueName: venue.name,
+      }))
+    );
+  }, [profile]);
+
   useEffect(() => {
     async function fetchProfile() {
       try {
         const data = await getProfileByName(name);
-        setProfile(data);
+
+        let venuesWithBookings = data.venues || [];
+
+        if (data.venueManager) {
+          venuesWithBookings = await getProfileVenuesWithBookings(name);
+        }
+
+        setProfile({
+          ...data,
+          venues: venuesWithBookings,
+        });
 
         setFormData({
           bio: data.bio || "",
@@ -366,45 +391,41 @@ export default function Profile() {
                     label="Venue reservations"
                     icon="ph:calendar-check-light"
                   >
-                    {profile?.venues?.some(
-                      (venue) => venue.bookings && venue.bookings.length > 0
-                    ) ? (
-                      profile.venues.flatMap((venue) =>
-                        venue.bookings?.map((booking) => (
-                          <div
-                            key={booking.id}
-                            className="rounded-2xl border border-[#E4D8D0] bg-white p-5"
-                          >
-                            <div className="flex items-start justify-between gap-4">
-                              <div>
-                                <p className="font-semibold">{venue.name}</p>
+                    {hostBookings.length > 0 ? (
+                      hostBookings.map((booking) => (
+                        <div
+                          key={booking.id}
+                          className="rounded-2xl border border-[#E4D8D0] bg-white p-5"
+                        >
+                          <div className="flex items-start justify-between gap-4">
+                            <div>
+                              <p className="font-semibold">
+                                {booking.venueName}
+                              </p>
 
-                                <p className="mt-2 text-sm text-[#7C7069]">
-                                  Guest: {booking.customer?.name || "Customer"}
-                                </p>
+                              <p className="mt-2 text-sm text-[#7C7069]">
+                                Guest: {booking.customer?.name || "Customer"}
+                              </p>
 
-                                <p className="mt-2 text-sm text-[#7C7069]">
-                                  {new Date(
-                                    booking.dateFrom
-                                  ).toLocaleDateString()}{" "}
-                                  →{" "}
-                                  {new Date(
-                                    booking.dateTo
-                                  ).toLocaleDateString()}
-                                </p>
+                              <p className="mt-2 text-sm text-[#7C7069]">
+                                {new Date(
+                                  booking.dateFrom
+                                ).toLocaleDateString()}{" "}
+                                →{" "}
+                                {new Date(booking.dateTo).toLocaleDateString()}
+                              </p>
 
-                                <p className="mt-2 text-sm text-[#B55332]">
-                                  {booking.guests} guests
-                                </p>
-                              </div>
+                              <p className="mt-2 text-sm text-[#B55332]">
+                                {booking.guests} guests
+                              </p>
+                            </div>
 
-                              <div className="rounded-full bg-[#EEF3E8] px-4 py-2 text-xs font-medium text-[#4F6B42]">
-                                Reserved
-                              </div>
+                            <div className="rounded-full bg-[#EEF3E8] px-4 py-2 text-xs font-medium text-[#4F6B42]">
+                              Reserved
                             </div>
                           </div>
-                        ))
-                      )
+                        </div>
+                      ))
                     ) : (
                       <EmptyState
                         title="No reservations yet."
