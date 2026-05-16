@@ -6,7 +6,7 @@ export async function getProfileByName(name) {
   const apiKey = load("apiKey");
 
   const response = await fetch(
-    `${HOLIDAZE_API}/profiles/${name}?_venues=true&_bookings=true`,
+    `${HOLIDAZE_API}/profiles/${name}?_venues=true&_bookings=true&_venueBookings=true`,
     {
       headers: {
         Authorization: `Bearer ${user?.accessToken}`,

@@ -63,10 +63,21 @@ export default function Home() {
 
   const filteredVenues = useMemo(() => {
     return venues.filter((venue) => {
-      const searchText =
-        `${venue.name} ${venue.description} ${venue.location?.city} ${venue.location?.country}`.toLowerCase();
+      const searchableValues = [
+        venue.name,
+        venue.description,
+        venue.location?.city,
+        venue.location?.country,
+        venue.location?.continent,
+        venue.owner?.name,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
 
-      const matchesSearch = searchText.includes(search.toLowerCase());
+      const matchesSearch = searchableValues.includes(
+        search.trim().toLowerCase()
+      );
 
       const matchesGuests = guests
         ? Number(venue.maxGuests) >= Number(guests)
@@ -271,6 +282,24 @@ export default function Home() {
             })}
           </div>
 
+          <div className="mt-8 max-w-xl">
+            <label className="relative block">
+              <Icon
+                icon="ph:magnifying-glass-light"
+                width="22"
+                className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B8B82]"
+              />
+
+              <input
+                type="search"
+                placeholder="Search venues, cities or countries..."
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                className="w-full rounded-full border border-[#D8C8BF] bg-white py-4 pl-14 pr-6 text-sm outline-none transition focus:border-[#B55332]"
+              />
+            </label>
+          </div>
+
           {(search ||
             checkIn ||
             checkOut ||
@@ -296,7 +325,7 @@ export default function Home() {
           )}
 
           {!loading && !error && filteredVenues.length === 0 && (
-            <p className="mt-14 text-sm text-[#7C7069]">
+            <p className="mt-14 rounded-[28px] border border-dashed border-[#D8C8BF] bg-white px-8 py-12 text-center text-sm text-[#7C7069]">
               No stays found. Try another search or filter.
             </p>
           )}

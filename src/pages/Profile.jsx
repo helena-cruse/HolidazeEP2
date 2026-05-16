@@ -288,7 +288,7 @@ export default function Profile() {
                 </form>
               )}
 
-              <div className="mt-12 grid gap-8 border-t border-[#E4D8D0] pt-10 lg:grid-cols-2">
+              <div className="mt-12 grid gap-8 border-t border-[#E4D8D0] pt-10 lg:grid-cols-3">
                 <ProfileCard
                   title="Upcoming bookings"
                   label="Your stays"
@@ -359,6 +359,60 @@ export default function Profile() {
                     />
                   )}
                 </ProfileCard>
+
+                {profile?.venueManager && (
+                  <ProfileCard
+                    title="Host bookings"
+                    label="Venue reservations"
+                    icon="ph:calendar-check-light"
+                  >
+                    {profile?.venues?.some(
+                      (venue) => venue.bookings && venue.bookings.length > 0
+                    ) ? (
+                      profile.venues.flatMap((venue) =>
+                        venue.bookings?.map((booking) => (
+                          <div
+                            key={booking.id}
+                            className="rounded-2xl border border-[#E4D8D0] bg-white p-5"
+                          >
+                            <div className="flex items-start justify-between gap-4">
+                              <div>
+                                <p className="font-semibold">{venue.name}</p>
+
+                                <p className="mt-2 text-sm text-[#7C7069]">
+                                  Guest: {booking.customer?.name || "Customer"}
+                                </p>
+
+                                <p className="mt-2 text-sm text-[#7C7069]">
+                                  {new Date(
+                                    booking.dateFrom
+                                  ).toLocaleDateString()}{" "}
+                                  →{" "}
+                                  {new Date(
+                                    booking.dateTo
+                                  ).toLocaleDateString()}
+                                </p>
+
+                                <p className="mt-2 text-sm text-[#B55332]">
+                                  {booking.guests} guests
+                                </p>
+                              </div>
+
+                              <div className="rounded-full bg-[#EEF3E8] px-4 py-2 text-xs font-medium text-[#4F6B42]">
+                                Reserved
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )
+                    ) : (
+                      <EmptyState
+                        title="No reservations yet."
+                        text="Bookings made on your venues will appear here."
+                      />
+                    )}
+                  </ProfileCard>
+                )}
               </div>
             </div>
           </section>

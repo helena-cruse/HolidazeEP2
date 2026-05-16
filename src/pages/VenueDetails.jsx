@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import {
   addMonths,
@@ -15,11 +15,9 @@ import {
 } from "date-fns";
 
 import Header from "../components/Header.jsx";
-import { getVenueById } from "../api/venues";
 import { createBooking } from "../api/bookings";
+import { deleteVenue, getVenueById } from "../api/venues";
 import { load } from "../utils/storage";
-
-import logo from "../../public/assets/media/HolidazeLogo.png";
 
 function datesOverlap(startA, endA, startB, endB) {
   return startA < endB && startB < endA;
@@ -52,6 +50,7 @@ function isDateRangeAvailable(bookings, checkIn, checkOut) {
 
 export default function VenueDetails() {
   const { id } = useParams();
+  const navigate = useNavigate();
 
   const [venue, setVenue] = useState(null);
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -60,12 +59,16 @@ export default function VenueDetails() {
   const [guests, setGuests] = useState("1");
   const [loading, setLoading] = useState(true);
   const [bookingLoading, setBookingLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [error, setError] = useState("");
   const [bookingMessage, setBookingMessage] = useState("");
   const [galleryOpen, setGalleryOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const user = load("user");
   const apiKey = load("apiKey");
+
+  const isOwner = user?.name === venue?.owner?.name;
 
   useEffect(() => {
     async function loadVenue() {
@@ -95,15 +98,25 @@ export default function VenueDetails() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#F5EFEB] p-10">Loading venue...</main>
+      <div className="min-h-screen bg-[#F5EFEB]">
+        <Header />
+        <main className="px-8 py-20 md:px-20">
+          <p className="text-[#7C7069]">Loading venue...</p>
+        </main>
+      </div>
     );
   }
 
   if (error || !venue) {
     return (
-      <main className="min-h-screen bg-[#F5EFEB] p-10">
-        {error || "Venue not found"}
-      </main>
+      <div className="min-h-screen bg-[#F5EFEB]">
+        <Header />
+        <main className="px-8 py-20 md:px-20">
+          <p className="rounded-2xl bg-[#F5E6DF] px-5 py-4 text-sm text-[#B55332]">
+            {error || "Venue not found"}
+          </p>
+        </main>
+      </div>
     );
   }
 
@@ -118,6 +131,11 @@ export default function VenueDetails() {
   async function handleBooking(event) {
     event.preventDefault();
     setBookingMessage("");
+
+    if (isOwner) {
+      setBookingMessage("You cannot book your own venue.");
+      return;
+    }
 
     if (!user?.accessToken || !apiKey) {
       setBookingMessage("Please log in before booking this stay.");
@@ -153,6 +171,24 @@ export default function VenueDetails() {
       setBookingMessage(error.message);
     } finally {
       setBookingLoading(false);
+    }
+  }
+
+  async function handleDeleteVenue() {
+    if (!user?.accessToken || !apiKey) {
+      setBookingMessage("You need to log in to delete this venue.");
+      return;
+    }
+
+    try {
+      setDeleteLoading(true);
+      await deleteVenue(id, user.accessToken, apiKey);
+      navigate(`/profile/${user.name}`);
+    } catch (error) {
+      setBookingMessage(error.message);
+    } finally {
+      setDeleteLoading(false);
+      setDeleteOpen(false);
     }
   }
 
@@ -212,20 +248,43 @@ export default function VenueDetails() {
           <section className="mt-10 grid gap-10 lg:grid-cols-[1fr_430px]">
             <div>
               <div className="border-b border-[#E4D8D0] pb-8">
-                <h1 className="font-serif text-6xl font-semibold">
-                  {venue.name}
-                </h1>
+                <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
+                  <div>
+                    <h1 className="font-serif text-5xl font-semibold md:text-6xl">
+                      {venue.name}
+                    </h1>
 
-                <p className="mt-4 text-[#7C7069]">
-                  {venue.location?.city || "Unknown city"},{" "}
-                  {venue.location?.country || "Unknown country"} · Up to{" "}
-                  {venue.maxGuests} guests
-                </p>
+                    <p className="mt-4 text-[#7C7069]">
+                      {venue.location?.city || "Unknown city"},{" "}
+                      {venue.location?.country || "Unknown country"} · Up to{" "}
+                      {venue.maxGuests} guests
+                    </p>
 
-                <p className="mt-4 flex items-center gap-2 text-[#B55332]">
-                  <Icon icon="ph:star-fill" />
-                  {venue.rating || "No rating"} rating
-                </p>
+                    <p className="mt-4 flex items-center gap-2 text-[#B55332]">
+                      <Icon icon="ph:star-fill" />
+                      {venue.rating || "No rating"} rating
+                    </p>
+                  </div>
+
+                  {isOwner && (
+                    <div className="flex flex-wrap gap-3">
+                      <Link
+                        to={`/edit-venue/${venue.id}`}
+                        className="rounded-full bg-[#B55332] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#944224]"
+                      >
+                        Edit venue
+                      </Link>
+
+                      <button
+                        type="button"
+                        onClick={() => setDeleteOpen(true)}
+                        className="rounded-full border border-[#B55332] px-6 py-3 text-sm font-semibold text-[#B55332] transition hover:bg-[#F5E6DF]"
+                      >
+                        Delete venue
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="border-b border-[#E4D8D0] py-8">
@@ -253,6 +312,7 @@ export default function VenueDetails() {
                 <h2 className="font-serif text-3xl font-semibold">
                   About this place
                 </h2>
+
                 <p className="mt-4 max-w-4xl leading-relaxed text-[#6B5F58]">
                   {venue.description}
                 </p>
@@ -281,6 +341,7 @@ export default function VenueDetails() {
                     <p className="font-serif text-2xl font-semibold">
                       {venue.owner?.name || "Holidaze host"}
                     </p>
+
                     <p className="mt-1 text-sm text-[#7C7069]">Venue manager</p>
                   </div>
 
@@ -374,10 +435,14 @@ export default function VenueDetails() {
                 </div>
 
                 <button
-                  disabled={bookingLoading || !isAvailable}
+                  disabled={bookingLoading || !isAvailable || isOwner}
                   className="mt-6 w-full rounded-full bg-[#B55332] px-8 py-5 text-sm font-semibold tracking-wide text-white transition hover:bg-[#944224] disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {bookingLoading ? "Booking..." : "Reserve now"}
+                  {isOwner
+                    ? "You own this venue"
+                    : bookingLoading
+                    ? "Booking..."
+                    : "Reserve now"}
                 </button>
 
                 {bookingMessage && (
@@ -397,6 +462,7 @@ export default function VenueDetails() {
                 <h2 className="font-serif text-4xl text-white">All photos</h2>
 
                 <button
+                  type="button"
                   onClick={() => setGalleryOpen(false)}
                   className="rounded-full bg-white px-6 py-3 text-sm text-[#2A211D]"
                 >
@@ -413,6 +479,44 @@ export default function VenueDetails() {
                     className="h-[420px] w-full rounded-[28px] object-cover"
                   />
                 ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {deleteOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#2A211D]/70 px-6">
+            <div className="w-full max-w-md rounded-[28px] bg-white p-8 shadow-[0_20px_60px_rgba(0,0,0,0.2)]">
+              <p className="text-sm uppercase tracking-[0.3em] text-[#B55332]">
+                Delete venue
+              </p>
+
+              <h2 className="mt-3 font-serif text-4xl font-semibold">
+                Are you sure?
+              </h2>
+
+              <p className="mt-4 text-sm leading-relaxed text-[#7C7069]">
+                This will permanently delete this venue. This action cannot be
+                undone.
+              </p>
+
+              <div className="mt-8 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setDeleteOpen(false)}
+                  className="flex-1 rounded-full border border-[#D8C8BF] px-6 py-3 text-sm font-medium text-[#7C7069] transition hover:border-[#B55332] hover:text-[#B55332]"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleDeleteVenue}
+                  disabled={deleteLoading}
+                  className="flex-1 rounded-full bg-[#B55332] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#944224] disabled:opacity-60"
+                >
+                  {deleteLoading ? "Deleting..." : "Delete"}
+                </button>
               </div>
             </div>
           </div>
@@ -539,10 +643,12 @@ function Calendar({
           <span className="h-3 w-3 rounded bg-[#EEF3E8]" />
           Available
         </span>
+
         <span className="flex items-center gap-2">
           <span className="h-3 w-3 rounded bg-[#F5E6DF]" />
           Booked
         </span>
+
         <span className="flex items-center gap-2">
           <span className="h-3 w-3 rounded bg-[#B55332]" />
           Selected

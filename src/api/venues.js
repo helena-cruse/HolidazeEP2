@@ -2,7 +2,7 @@ import { HOLIDAZE_API } from "../utils/constants";
 
 export async function getVenues() {
   const response = await fetch(
-    `${HOLIDAZE_API}/venues?_owner=true&_bookings=true&limit=50`
+    `${HOLIDAZE_API}/venues?_owner=true&_bookings=true&sort=created&sortOrder=desc&limit=100`
   );
 
   const json = await response.json();
@@ -46,4 +46,42 @@ export async function createVenue(venueData, token, apiKey) {
   }
 
   return json.data;
+}
+
+export async function updateVenue(id, venueData, token, apiKey) {
+  const response = await fetch(`${HOLIDAZE_API}/venues/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+      "X-Noroff-API-Key": apiKey,
+    },
+    body: JSON.stringify(venueData),
+  });
+
+  const json = await response.json();
+
+  if (!response.ok) {
+    throw new Error(json.errors?.[0]?.message || "Failed to update venue");
+  }
+
+  return json.data;
+}
+
+export async function deleteVenue(id, token, apiKey) {
+  const response = await fetch(`${HOLIDAZE_API}/venues/${id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "X-Noroff-API-Key": apiKey,
+    },
+  });
+
+  if (!response.ok) {
+    const json = await response.json();
+
+    throw new Error(json.errors?.[0]?.message || "Failed to delete venue");
+  }
+
+  return true;
 }
