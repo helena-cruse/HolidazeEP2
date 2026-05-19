@@ -13,55 +13,47 @@ export default function Header() {
     navigate("/");
   }
 
-  const navLink =
-    "rounded-full px-5 py-2.5 text-sm font-medium tracking-wide text-[#6B5F58] transition hover:bg-[#F3E7DF] hover:text-[#B55332]";
-
-  const primaryLink =
-    "rounded-full bg-[#B55332] px-6 py-2.5 text-sm font-semibold tracking-wide text-white shadow-[0_8px_22px_rgba(181,83,50,0.18)] transition hover:bg-[#944224]";
-
   return (
-    <header className="border-b border-[#E4D8D0] bg-[#F8F2EE]/95 px-8 py-4 backdrop-blur md:px-10">
-      <div className="mx-auto flex max-w-[1500px] items-center justify-between gap-8">
-        <Link to="/" className="flex items-center gap-4">
-          <img
-            src={logo}
-            alt="Holidaze logo"
-            className="h-16 w-auto object-contain"
-          />
+    <header className="site-header">
+      <div className="site-header-inner">
+        <Link to="/" className="site-logo-link">
+          <img src={logo} alt="Holidaze logo" className="site-logo-image" />
 
-          <span className="font-serif text-3xl font-semibold tracking-wide text-[#B55332] md:text-4xl">
-            Holidaze
-          </span>
+          <span className="site-logo-text">Holidaze</span>
         </Link>
 
-        <nav className="hidden items-center gap-2 rounded-full border border-[#E4D8D0] bg-white/70 px-2 py-2 shadow-[0_10px_30px_rgba(0,0,0,0.04)] md:flex">
-          <Link to="/" className={navLink}>
+        <nav className="site-nav">
+          <Link to="/" className="site-nav-link">
             Explore
           </Link>
 
           {user?.venueManager && (
-            <Link to="/create-venue" className={navLink}>
+            <Link to="/create-venue" className="site-nav-link">
               Create Venue
             </Link>
           )}
 
           {user ? (
             <>
-              <Link to={`/profile/${user.name}`} className={primaryLink}>
+              <Link to={`/profile/${user.name}`} className="site-nav-primary">
                 Profile
               </Link>
 
-              <button type="button" onClick={handleLogout} className={navLink}>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="site-nav-button"
+              >
                 Log out
               </button>
             </>
           ) : (
             <>
-              <Link to="/login" className={navLink}>
+              <Link to="/login" className="site-nav-link">
                 Log in
               </Link>
 
-              <Link to="/register" className={primaryLink}>
+              <Link to="/register" className="site-nav-primary">
                 Register
               </Link>
             </>

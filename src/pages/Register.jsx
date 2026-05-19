@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import Header from "../components/Header.jsx";
-import { createApiKey, registerUser } from "../api/auth";
+import { createApiKey, loginUser, registerUser } from "../api/auth";
 import { save } from "../utils/storage";
 
 import registerImage from "../../public/assets/media/register.png";
@@ -35,7 +35,15 @@ export default function Register() {
     event.preventDefault();
     setMessage("");
 
-    if (!formData.email.endsWith("@stud.noroff.no")) {
+    const cleanName = formData.name.trim();
+    const cleanEmail = formData.email.trim().toLowerCase();
+
+    if (!cleanName) {
+      setMessage("Please choose a username.");
+      return;
+    }
+
+    if (!cleanEmail.endsWith("@stud.noroff.no")) {
       setMessage("You must use a stud.noroff.no email address.");
       return;
     }
@@ -51,8 +59,8 @@ export default function Register() {
     }
 
     const userData = {
-      name: formData.name.trim(),
-      email: formData.email.trim(),
+      name: cleanName,
+      email: cleanEmail,
       password: formData.password,
       venueManager: formData.venueManager,
     };
@@ -60,22 +68,26 @@ export default function Register() {
     if (formData.avatarUrl.trim()) {
       userData.avatar = {
         url: formData.avatarUrl.trim(),
-        alt: `${formData.name} profile image`,
+        alt: `${cleanName} profile image`,
       };
     }
 
     try {
       setLoading(true);
 
-      const newUser = await registerUser(userData);
+      await registerUser(userData);
 
-      save("user", newUser);
+      const loggedInUser = await loginUser({
+        email: cleanEmail,
+        password: formData.password,
+      });
 
-      const apiKey = await createApiKey(newUser.accessToken);
+      const apiKey = await createApiKey(loggedInUser.accessToken);
 
+      save("user", loggedInUser);
       save("apiKey", apiKey);
 
-      navigate(`/profile/${newUser.name}`);
+      navigate(`/profile/${loggedInUser.name}`);
     } catch (error) {
       setMessage(error.message);
     } finally {

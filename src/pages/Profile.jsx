@@ -32,7 +32,7 @@ export default function Profile() {
   const isOwnProfile = loggedInUser?.name === name;
 
   const hostBookings = useMemo(() => {
-    if (!profile?.venues?.length) return [];
+    if (!isOwnProfile || !profile?.venues?.length) return [];
 
     return profile.venues.flatMap((venue) =>
       (venue.bookings || []).map((booking) => ({
@@ -40,16 +40,19 @@ export default function Profile() {
         venueName: venue.name,
       }))
     );
-  }, [profile]);
+  }, [profile, isOwnProfile]);
 
   useEffect(() => {
     async function fetchProfile() {
+      setLoading(true);
+      setMessage("");
+
       try {
         const data = await getProfileByName(name);
 
         let venuesWithBookings = data.venues || [];
 
-        if (data.venueManager) {
+        if (data.venueManager && loggedInUser?.name === name) {
           venuesWithBookings = await getProfileVenuesWithBookings(name);
         }
 
@@ -74,7 +77,7 @@ export default function Profile() {
     }
 
     fetchProfile();
-  }, [name]);
+  }, [name, loggedInUser?.name]);
 
   function handleChange(event) {
     const { name, value, type, checked } = event.target;
@@ -117,8 +120,52 @@ export default function Profile() {
         ...updatedProfile,
       }));
 
+      setFormData((current) => ({
+        ...current,
+        venueManager: updatedProfile.venueManager || false,
+      }));
+
       setEditing(false);
       setMessage("Profile updated successfully.");
+    } catch (error) {
+      setMessage(error.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleBecomeHost() {
+    setMessage("");
+
+    const profileData = {
+      bio: profile?.bio || "",
+      venueManager: true,
+    };
+
+    if (profile?.avatar?.url) {
+      profileData.avatar = profile.avatar;
+    }
+
+    if (profile?.banner?.url) {
+      profileData.banner = profile.banner;
+    }
+
+    try {
+      setSaving(true);
+      const updatedProfile = await updateProfile(name, profileData);
+
+      setProfile((current) => ({
+        ...current,
+        ...updatedProfile,
+        venueManager: true,
+      }));
+
+      setFormData((current) => ({
+        ...current,
+        venueManager: true,
+      }));
+
+      setMessage("You are now registered as a venue manager.");
     } catch (error) {
       setMessage(error.message);
     } finally {
@@ -136,6 +183,8 @@ export default function Profile() {
       </div>
     );
   }
+
+  const isVenueManager = profile?.venueManager;
 
   return (
     <div className="min-h-screen bg-[#E7DED7] text-[#2A211D]">
@@ -185,8 +234,15 @@ export default function Profile() {
                     <p className="mt-2 text-[#7C7069]">{profile?.email}</p>
 
                     <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#EEF3E8] px-4 py-2 text-sm font-medium text-[#4F6B42]">
-                      <Icon icon="ph:house-line-light" width="18" />
-                      {profile?.venueManager ? "Venue Manager" : "Customer"}
+                      <Icon
+                        icon={
+                          isVenueManager
+                            ? "ph:house-line-light"
+                            : "ph:user-light"
+                        }
+                        width="18"
+                      />
+                      {isVenueManager ? "Venue Manager" : "Customer"}
                     </div>
                   </div>
                 </div>
@@ -208,7 +264,7 @@ export default function Profile() {
 
               {message && (
                 <p className="mt-8 flex items-center gap-3 rounded-2xl bg-[#F5E6DF] px-5 py-4 text-sm text-[#B55332]">
-                  <Icon icon="ph:check-circle-light" width="20" />
+                  <Icon icon="ph:info-light" width="20" />
                   {message}
                 </p>
               )}
@@ -219,7 +275,7 @@ export default function Profile() {
                 </p>
               )}
 
-              {editing && (
+              {editing && isOwnProfile && (
                 <form
                   onSubmit={handleSubmit}
                   className="mt-10 rounded-[28px] border border-[#E4D8D0] bg-[#FCFAF8] p-8"
@@ -313,79 +369,135 @@ export default function Profile() {
                 </form>
               )}
 
-              <div className="mt-12 grid gap-8 border-t border-[#E4D8D0] pt-10 lg:grid-cols-3">
-                <ProfileCard
-                  title="Upcoming bookings"
-                  label="Your stays"
-                  icon="ph:calendar-blank-light"
-                >
-                  {profile?.bookings?.length > 0 ? (
-                    profile.bookings.map((booking) => (
-                      <div
-                        key={booking.id}
-                        className="rounded-2xl border border-[#E4D8D0] bg-white p-5"
-                      >
-                        <p className="font-semibold">
-                          {booking?.venue?.name || "Venue"}
-                        </p>
+              {isOwnProfile && !isVenueManager && !editing && (
+                <section className="mt-10 rounded-[28px] border border-[#E4D8D0] bg-[#FCFAF8] p-8">
+                  <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <p className="text-sm uppercase tracking-[0.3em] text-[#B55332]">
+                        Become a host
+                      </p>
 
-                        <p className="mt-2 text-sm text-[#7C7069]">
-                          {new Date(booking.dateFrom).toLocaleDateString()} →{" "}
-                          {new Date(booking.dateTo).toLocaleDateString()}
-                        </p>
-                      </div>
-                    ))
-                  ) : (
-                    <EmptyState
-                      title="No bookings yet."
-                      text="When you book a stay, your upcoming bookings will appear here."
-                      buttonText="Explore venues"
-                      to="/"
-                      variant="outline"
-                    />
-                  )}
-                </ProfileCard>
+                      <h2 className="mt-3 font-serif text-3xl font-semibold">
+                        Start listing your own venues
+                      </h2>
 
-                <ProfileCard
-                  title="Venues"
-                  label="Your listings"
-                  icon="ph:house-line-light"
-                >
-                  {profile?.venues?.length > 0 ? (
-                    profile.venues.map((venue) => (
-                      <Link
-                        key={venue.id}
-                        to={`/venue/${venue.id}`}
-                        className="block rounded-2xl border border-[#E4D8D0] bg-white p-5 transition hover:-translate-y-1 hover:shadow-md"
-                      >
-                        <p className="font-semibold">{venue.name}</p>
+                      <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[#7C7069]">
+                        Activate venue manager access to create, edit and manage
+                        your own Holidaze venues.
+                      </p>
+                    </div>
 
-                        <p className="mt-1 text-sm text-[#7C7069]">
-                          {venue.location?.city}, {venue.location?.country}
-                        </p>
+                    <button
+                      type="button"
+                      onClick={handleBecomeHost}
+                      disabled={saving}
+                      className="inline-flex w-fit items-center gap-2 rounded-full bg-[#B55332] px-7 py-4 text-sm font-semibold text-white transition hover:bg-[#944224] disabled:opacity-60"
+                    >
+                      <Icon icon="ph:house-line-light" width="18" />
+                      {saving ? "Updating..." : "Become a venue manager"}
+                    </button>
+                  </div>
+                </section>
+              )}
 
-                        <p className="mt-2 text-sm text-[#B55332]">
-                          {venue.price} NOK / night
-                        </p>
-                      </Link>
-                    ))
-                  ) : (
-                    <EmptyState
-                      title="No venues created yet."
-                      text={
-                        profile?.venueManager
-                          ? "Create your first venue and start hosting on Holidaze."
-                          : "Register as a venue manager to create listings."
-                      }
-                      buttonText={
-                        profile?.venueManager ? "Create your first venue" : null
-                      }
-                      to="/create-venue"
-                    />
-                  )}
-                </ProfileCard>
+              <div
+                className={`mt-12 grid gap-8 border-t border-[#E4D8D0] pt-10 ${
+                  isVenueManager && isOwnProfile
+                    ? "lg:grid-cols-3"
+                    : "lg:grid-cols-1"
+                }`}
+              >
+                {isOwnProfile && (
+                  <ProfileCard
+                    title="Upcoming bookings"
+                    label="Your stays"
+                    icon="ph:calendar-blank-light"
+                  >
+                    {profile?.bookings?.length > 0 ? (
+                      profile.bookings.map((booking) => {
+                        const bookingCard = (
+                          <div className="rounded-2xl border border-[#E4D8D0] bg-white p-5 transition hover:-translate-y-1 hover:shadow-md">
+                            <p className="font-semibold">
+                              {booking?.venue?.name || "Venue"}
+                            </p>
 
-                {profile?.venueManager && (
+                            <p className="mt-2 text-sm text-[#7C7069]">
+                              {new Date(booking.dateFrom).toLocaleDateString()}{" "}
+                              → {new Date(booking.dateTo).toLocaleDateString()}
+                            </p>
+
+                            <p className="mt-2 text-sm text-[#B55332]">
+                              {booking.guests} guests
+                            </p>
+                          </div>
+                        );
+
+                        return booking?.venue?.id ? (
+                          <Link
+                            key={booking.id}
+                            to={`/venue/${booking.venue.id}`}
+                          >
+                            {bookingCard}
+                          </Link>
+                        ) : (
+                          <div key={booking.id}>{bookingCard}</div>
+                        );
+                      })
+                    ) : (
+                      <EmptyState
+                        title="No bookings yet."
+                        text="When you book a stay, your upcoming bookings will appear here."
+                        buttonText="Explore venues"
+                        to="/"
+                        variant="outline"
+                      />
+                    )}
+                  </ProfileCard>
+                )}
+
+                {isVenueManager && (
+                  <ProfileCard
+                    title="Venues"
+                    label={isOwnProfile ? "Your listings" : "Offered venues"}
+                    icon="ph:house-line-light"
+                  >
+                    {profile?.venues?.length > 0 ? (
+                      profile.venues.map((venue) => (
+                        <Link
+                          key={venue.id}
+                          to={`/venue/${venue.id}`}
+                          className="block rounded-2xl border border-[#E4D8D0] bg-white p-5 transition hover:-translate-y-1 hover:shadow-md"
+                        >
+                          <p className="font-semibold">{venue.name}</p>
+
+                          <p className="mt-1 text-sm text-[#7C7069]">
+                            {venue.location?.city || "Unknown city"},{" "}
+                            {venue.location?.country || "Unknown country"}
+                          </p>
+
+                          <p className="mt-2 text-sm text-[#B55332]">
+                            {venue.price} NOK / night
+                          </p>
+                        </Link>
+                      ))
+                    ) : (
+                      <EmptyState
+                        title="No venues created yet."
+                        text={
+                          isOwnProfile
+                            ? "Create your first venue and start hosting on Holidaze."
+                            : "This user has not created any venues yet."
+                        }
+                        buttonText={
+                          isOwnProfile ? "Create your first venue" : null
+                        }
+                        to="/create-venue"
+                      />
+                    )}
+                  </ProfileCard>
+                )}
+
+                {isVenueManager && isOwnProfile && (
                   <ProfileCard
                     title="Host bookings"
                     label="Venue reservations"

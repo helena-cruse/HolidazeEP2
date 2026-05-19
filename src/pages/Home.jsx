@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "@iconify/react";
 
@@ -51,6 +51,9 @@ function venueIsAvailable(venue, checkIn, checkOut) {
 }
 
 export default function Home() {
+  const checkInRef = useRef(null);
+  const checkOutRef = useRef(null);
+
   const [venues, setVenues] = useState([]);
   const [search, setSearch] = useState("");
   const [checkIn, setCheckIn] = useState("");
@@ -132,8 +135,16 @@ export default function Home() {
     document.getElementById("venues")?.scrollIntoView({ behavior: "smooth" });
   }
 
-  function handleLoadMore() {
-    setVisibleCount((currentCount) => currentCount + 3);
+  function openDatePicker(inputRef) {
+    const input = inputRef.current;
+
+    if (!input) return;
+
+    input.focus();
+
+    if (typeof input.showPicker === "function") {
+      input.showPicker();
+    }
   }
 
   function handleFilterClick(label) {
@@ -158,76 +169,93 @@ export default function Home() {
         <Header />
 
         <section
-          className="relative flex h-[720px] items-center justify-center bg-cover bg-center px-6 text-center"
+          className="relative flex min-h-[760px] items-center justify-center overflow-hidden bg-cover bg-center px-6 py-20 text-center"
           style={{
-            backgroundImage: `linear-gradient(rgba(0,0,0,0.18), rgba(0,0,0,0.18)), url(${heroImage})`,
+            backgroundImage: `linear-gradient(rgba(42,33,29,0.30), rgba(42,33,29,0.30)), url(${heroImage})`,
           }}
         >
-          <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-black/20" />
-
-          <div className="relative z-10 max-w-5xl">
-            <div className="mx-auto w-fit rounded-full bg-white/20 px-8 py-2 backdrop-blur-sm">
-              <p className="text-sm uppercase tracking-[0.4em] text-white">
+          <div className="relative z-10 w-full max-w-6xl">
+            <div className="hero-copy-panel mx-auto max-w-4xl rounded-[34px] px-8 py-10">
+              <p className="text-xs uppercase tracking-[0.5em] text-white">
                 Luxury stays worldwide
+              </p>
+
+              <h1 className="mx-auto mt-6 max-w-5xl font-serif text-5xl font-semibold leading-tight text-white md:text-7xl">
+                Find your perfect stay
+              </h1>
+
+              <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-white">
+                Discover handpicked destinations, boutique villas and
+                unforgettable escapes.
               </p>
             </div>
 
-            <h1 className="mt-8 font-serif text-6xl font-semibold leading-tight text-white md:text-7xl">
-              Find your perfect stay
-            </h1>
-
-            <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-white/90">
-              Discover handpicked destinations, boutique villas and
-              unforgettable escapes.
-            </p>
-
             <form
               onSubmit={handleSubmit}
-              className="mt-16 grid overflow-hidden rounded-[32px] bg-white shadow-2xl md:grid-cols-[1.4fr_1fr_1fr_0.8fr_160px]"
+              className="mx-auto mt-10 max-w-6xl rounded-[32px] bg-white shadow-[0_22px_70px_rgba(0,0,0,0.22)]"
             >
-              <input
-                type="text"
-                placeholder="Where are you going?"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                className="border-b border-[#E8DED7] px-7 py-6 text-sm outline-none md:border-b-0 md:border-r"
-              />
+              <div className="hero-search-form">
+                <input
+                  type="text"
+                  placeholder="Where are you going?"
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  className="hero-search-field px-7 py-6 text-sm outline-none"
+                />
 
-              <input
-                type="date"
-                aria-label="Check in date"
-                value={checkIn}
-                min={new Date().toISOString().split("T")[0]}
-                onChange={(event) => setCheckIn(event.target.value)}
-                className="border-b border-[#E8DED7] px-7 py-6 text-sm text-[#6B5F58] outline-none md:border-b-0 md:border-r"
-              />
+                <button
+                  type="button"
+                  onClick={() => openDatePicker(checkInRef)}
+                  className="hero-search-field flex items-center justify-between bg-white px-7 py-6 text-left text-sm text-[#6B5F58] outline-none"
+                >
+                  <input
+                    ref={checkInRef}
+                    type="date"
+                    aria-label="Check in date"
+                    value={checkIn}
+                    min={new Date().toISOString().split("T")[0]}
+                    onChange={(event) => setCheckIn(event.target.value)}
+                    className="w-full cursor-pointer bg-transparent outline-none"
+                  />
+                </button>
 
-              <input
-                type="date"
-                aria-label="Check out date"
-                value={checkOut}
-                min={checkIn || new Date().toISOString().split("T")[0]}
-                onChange={(event) => setCheckOut(event.target.value)}
-                className="border-b border-[#E8DED7] px-7 py-6 text-sm text-[#6B5F58] outline-none md:border-b-0 md:border-r"
-              />
+                <button
+                  type="button"
+                  onClick={() => openDatePicker(checkOutRef)}
+                  className="hero-search-field flex items-center justify-between bg-white px-7 py-6 text-left text-sm text-[#6B5F58] outline-none"
+                >
+                  <input
+                    ref={checkOutRef}
+                    type="date"
+                    aria-label="Check out date"
+                    value={checkOut}
+                    min={checkIn || new Date().toISOString().split("T")[0]}
+                    onChange={(event) => setCheckOut(event.target.value)}
+                    className="w-full cursor-pointer bg-transparent outline-none"
+                  />
+                </button>
 
-              <select
-                aria-label="Number of guests"
-                value={guests}
-                onChange={(event) => setGuests(event.target.value)}
-                className="border-b border-[#E8DED7] bg-white px-7 py-6 text-sm text-[#6B5F58] outline-none md:border-b-0 md:border-r"
-              >
-                <option value="">Guests</option>
-                <option value="1">1 guest</option>
-                <option value="2">2 guests</option>
-                <option value="3">3 guests</option>
-                <option value="4">4 guests</option>
-                <option value="5">5+ guests</option>
-              </select>
+                <select
+                  aria-label="Number of guests"
+                  value={guests}
+                  onChange={(event) => setGuests(event.target.value)}
+                  className="hero-search-field bg-white px-7 py-6 text-sm text-[#6B5F58] outline-none"
+                >
+                  <option value="">Guests</option>
+                  <option value="1">1 guest</option>
+                  <option value="2">2 guests</option>
+                  <option value="3">3 guests</option>
+                  <option value="4">4 guests</option>
+                  <option value="5">5+ guests</option>
+                </select>
 
-              <button className="bg-[#B55332] px-8 py-6 text-sm font-semibold tracking-wide text-white transition hover:bg-[#944224]">
-                Search
-              </button>
+                <button
+                  type="submit"
+                  className="hero-search-button bg-[#B55332] px-8 py-6 text-sm font-semibold tracking-wide text-white transition hover:bg-[#944224]"
+                >
+                  Search
+                </button>
+              </div>
             </form>
           </div>
         </section>
@@ -244,7 +272,7 @@ export default function Home() {
               </h2>
             </div>
 
-            <p className="max-w-md text-sm leading-relaxed text-[#7C7069]">
+            <p className="text-sm leading-relaxed text-[#7C7069]">
               {loading
                 ? "Finding beautiful stays for you..."
                 : `${filteredVenues.length} stays found`}
@@ -266,16 +294,7 @@ export default function Home() {
                       : "border-[#D8C8BF] bg-white text-[#7B675D] hover:border-[#B55332] hover:text-[#B55332]"
                   }`}
                 >
-                  <span
-                    className={`flex h-7 w-7 items-center justify-center rounded-full ${
-                      isActive
-                        ? "bg-white/20 text-white"
-                        : "bg-[#F5E6DF] text-[#B55332]"
-                    }`}
-                  >
-                    <Icon icon={filter.icon} width="18" height="18" />
-                  </span>
-
+                  <Icon icon={filter.icon} width="18" height="18" />
                   {filter.label}
                 </button>
               );
@@ -330,7 +349,7 @@ export default function Home() {
             </p>
           )}
 
-          <div className="mt-14 grid gap-8 md:grid-cols-2 xl:grid-cols-4">
+          <div className="venue-grid mt-14 gap-8">
             {visibleVenues.map((venue) => {
               const imageUrl = venue.media?.[0]?.url || heroImage;
               const imageAlt = venue.media?.[0]?.alt || venue.name;
@@ -369,32 +388,6 @@ export default function Home() {
                           {venue.maxGuests} guests
                         </p>
                       </div>
-
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        {venue.meta?.wifi && (
-                          <span className="rounded-full bg-[#F5E6DF] px-4 py-1 text-xs text-[#B55332]">
-                            Wifi
-                          </span>
-                        )}
-
-                        {venue.meta?.parking && (
-                          <span className="rounded-full bg-[#F5E6DF] px-4 py-1 text-xs text-[#B55332]">
-                            Parking
-                          </span>
-                        )}
-
-                        {venue.meta?.breakfast && (
-                          <span className="rounded-full bg-[#F5E6DF] px-4 py-1 text-xs text-[#B55332]">
-                            Breakfast
-                          </span>
-                        )}
-
-                        {venue.meta?.pets && (
-                          <span className="rounded-full bg-[#F5E6DF] px-4 py-1 text-xs text-[#B55332]">
-                            Pets
-                          </span>
-                        )}
-                      </div>
                     </div>
                   </div>
                 </Link>
@@ -406,7 +399,7 @@ export default function Home() {
             <div className="mt-20 flex justify-center">
               <button
                 type="button"
-                onClick={handleLoadMore}
+                onClick={() => setVisibleCount((current) => current + 3)}
                 className="rounded-full border border-[#B55332] px-12 py-5 text-sm font-medium text-[#B55332] transition hover:bg-[#B55332] hover:text-white"
               >
                 Explore more stays
@@ -414,20 +407,6 @@ export default function Home() {
             </div>
           )}
         </section>
-
-        <footer className="border-t border-[#E4D8D0] bg-[#F8F2EE] px-10 py-10">
-          <div className="flex flex-col items-center justify-between gap-10 md:flex-row">
-            <p className="text-sm text-[#7C7069]">
-              Crafted for modern travelers seeking calm, comfort and
-              unforgettable places.
-            </p>
-
-            <div className="flex gap-8 text-sm font-medium text-[#A0482A]">
-              <a href="#venues">Explore</a>
-              <Link to="/register">Register</Link>
-            </div>
-          </div>
-        </footer>
       </div>
     </div>
   );
