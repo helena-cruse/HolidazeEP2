@@ -32,7 +32,7 @@ function isDateBooked(date, bookings = []) {
   );
 }
 
-function isDateRangeAvailable(bookings, checkIn, checkOut) {
+function isDateRangeAvailable(bookings = [], checkIn, checkOut) {
   if (!checkIn || !checkOut) return true;
 
   const selectedStart = new Date(checkIn);
@@ -40,7 +40,7 @@ function isDateRangeAvailable(bookings, checkIn, checkOut) {
 
   if (selectedEnd <= selectedStart) return false;
 
-  return !bookings?.some((booking) => {
+  return !bookings.some((booking) => {
     const bookedStart = new Date(booking.dateFrom);
     const bookedEnd = new Date(booking.dateTo);
 
@@ -126,11 +126,19 @@ export default function VenueDetails() {
   const cleaningFee = nights > 0 ? 600 : 0;
   const serviceFee = nights > 0 ? 200 : 0;
   const total = totalPrice + cleaningFee + serviceFee;
-  const isAvailable = isDateRangeAvailable(venue.bookings, checkIn, checkOut);
+  const isAvailable = isDateRangeAvailable(
+    venue.bookings || [],
+    checkIn,
+    checkOut
+  );
+  const invalidDateRange =
+    checkIn && checkOut && new Date(checkOut) <= new Date(checkIn);
 
   async function handleBooking(event) {
     event.preventDefault();
     setBookingMessage("");
+
+    if (bookingLoading) return;
 
     if (isOwner) {
       setBookingMessage("You cannot book your own venue.");
@@ -147,24 +155,50 @@ export default function VenueDetails() {
       return;
     }
 
-    if (!isAvailable) {
-      setBookingMessage("This venue is not available for the selected dates.");
+    if (new Date(checkOut) <= new Date(checkIn)) {
+      setBookingMessage("Check-out must be after check-in.");
       return;
     }
+
+    const selectedIsAvailable = isDateRangeAvailable(
+      venue.bookings || [],
+      checkIn,
+      checkOut
+    );
+
+    if (!selectedIsAvailable) {
+      setBookingMessage("This venue is already booked for the selected dates.");
+      return;
+    }
+
+    const bookingPayload = {
+      dateFrom: new Date(checkIn).toISOString(),
+      dateTo: new Date(checkOut).toISOString(),
+      guests: Number(guests),
+      venueId: venue.id,
+    };
 
     try {
       setBookingLoading(true);
 
-      await createBooking(
-        {
-          dateFrom: new Date(checkIn).toISOString(),
-          dateTo: new Date(checkOut).toISOString(),
-          guests: Number(guests),
-          venueId: venue.id,
-        },
+      const newBooking = await createBooking(
+        bookingPayload,
         user.accessToken,
         apiKey
       );
+
+      const bookingToStore = {
+        id: newBooking?.id || crypto.randomUUID(),
+        dateFrom: newBooking?.dateFrom || bookingPayload.dateFrom,
+        dateTo: newBooking?.dateTo || bookingPayload.dateTo,
+        guests: newBooking?.guests || bookingPayload.guests,
+        customer: newBooking?.customer || { name: user.name },
+      };
+
+      setVenue((currentVenue) => ({
+        ...currentVenue,
+        bookings: [...(currentVenue.bookings || []), bookingToStore],
+      }));
 
       setBookingMessage("Booking created successfully.");
     } catch (error) {
@@ -194,7 +228,7 @@ export default function VenueDetails() {
 
   function handleCalendarDateClick(date) {
     if (date < new Date().setHours(0, 0, 0, 0)) return;
-    if (isDateBooked(date, venue.bookings)) return;
+    if (isDateBooked(date, venue.bookings || [])) return;
 
     const dateValue = format(date, "yyyy-MM-dd");
 
@@ -326,7 +360,7 @@ export default function VenueDetails() {
                 <Calendar
                   currentMonth={currentMonth}
                   setCurrentMonth={setCurrentMonth}
-                  bookings={venue.bookings}
+                  bookings={venue.bookings || []}
                   checkIn={checkIn}
                   checkOut={checkOut}
                   onDateClick={handleCalendarDateClick}
@@ -357,7 +391,7 @@ export default function VenueDetails() {
               </div>
             </div>
 
-            <aside className="h-fit rounded-[28px] bg-white p-7 shadow-[0_20px_60px_rgba(0,0,0,0.08)] lg:sticky lg:top-8">
+            <aside className="h-fit rounded-[28px] bg-white p-7 shadow-[0_20px_60px_rgba(0,0,0,0.08)] lg:sticky lg:top-28">
               <p className="font-serif text-4xl font-semibold">
                 {venue.price} NOK
                 <span className="ml-2 text-base font-normal text-[#7C7069]">
@@ -417,6 +451,12 @@ export default function VenueDetails() {
                   </p>
                 )}
 
+                {invalidDateRange && (
+                  <p className="mt-4 rounded-2xl bg-[#F5E6DF] px-4 py-3 text-sm text-[#B55332]">
+                    Check-out must be after check-in.
+                  </p>
+                )}
+
                 <div className="mt-6 space-y-3 text-sm">
                   <PriceLine
                     label={`${venue.price} NOK x ${nights || 0} nights`}
@@ -435,7 +475,14 @@ export default function VenueDetails() {
                 </div>
 
                 <button
-                  disabled={bookingLoading || !isAvailable || isOwner}
+                  disabled={
+                    bookingLoading ||
+                    !isAvailable ||
+                    invalidDateRange ||
+                    isOwner ||
+                    !checkIn ||
+                    !checkOut
+                  }
                   className="mt-6 w-full rounded-full bg-[#B55332] px-8 py-5 text-sm font-semibold tracking-wide text-white transition hover:bg-[#944224] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {isOwner
