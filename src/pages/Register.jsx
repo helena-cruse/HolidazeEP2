@@ -255,10 +255,6 @@ export default function Register() {
                   {loading ? "Creating account..." : "Create account"}
                 </button>
 
-                <p className="rounded-2xl bg-[#EEF3E8] px-5 py-4 text-center text-sm text-[#4F6B42]">
-                  Free to join · No credit card required
-                </p>
-
                 <div className="flex items-center justify-center gap-3 border-t border-[#E4D8D0] pt-6 text-sm text-[#7C7069]">
                   <span>Already have an account?</span>
 
