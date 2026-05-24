@@ -16,7 +16,7 @@ Brainstorming layout ideas and UX structure for the Holidaze homepage and hero s
 
 ### Outcome
 
-Used the suggestions as inspiration while designing the final layout manually in Figma and React.
+Used the suggestions as inspiration while designing the final layout manually in Figma.
 
 ### Tool used
 
@@ -49,8 +49,6 @@ Help debugging API requests and authentication issues connected to the Holidaze 
 ### Outcome
 
 Resolved issues related to login, API keys and localStorage handling after testing and adjusting the code manually.
-
----
 
 ### Tool used
 

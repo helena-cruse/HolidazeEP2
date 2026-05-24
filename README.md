@@ -1,8 +1,8 @@
-H# Holidaze PE2
+Holidaze PE2
 
 Holidaze is a modern accommodation booking application built as my Project Exam 2.
 
-The project allows users to browse venues, view venue details and make bookings. Venue managers can create, edit and manage their own venues and bookings through a separate dashboard experience.
+The project allows users to browse venues, view venue details and make bookings. Venue managers can create, edit and manage their own venues and bookings through a separate dashboard.
 
 ## Features
 
